@@ -68,7 +68,7 @@ $years = $pdo->query("SELECT * FROM years ORDER BY year_value DESC")->fetchAll()
                     </td>
                     <td>
                         <div class="action-btns">
-                            <button type="button" class="btn-icon" title="Edit Departemen" onclick="editDepartment(<?php echo $d['id']; ?>, '<?php echo htmlspecialchars(addslashes($d['dept_name'])); ?>')"><i class='bx bx-edit' style="color: #3b82f6;"></i></button>
+                            <button type="button" class="btn-icon" title="Edit Departemen" onclick="editDepartment(<?php echo $d['id']; ?>, '<?php echo htmlspecialchars(addslashes($d['dept_code'] ?? '')); ?>', '<?php echo htmlspecialchars(addslashes($d['dept_name'])); ?>')"><i class='bx bx-edit' style="color: #3b82f6;"></i></button>
                             <form method="POST" action="../modules/master/master_proc.php" style="display:inline;">
                                 <input type="hidden" name="action" value="toggle_dept">
                                 <input type="hidden" name="id" value="<?php echo $d['id']; ?>">
@@ -162,6 +162,30 @@ $years = $pdo->query("SELECT * FROM years ORDER BY year_value DESC")->fetchAll()
     </div>
 </div>
 
+<!-- Modal Edit Departemen -->
+<div class="modal-overlay" id="modalEditDept">
+    <div class="modal-content" style="max-width: 500px; height: auto;">
+        <div class="modal-header">
+            <div class="modal-title">Edit Departemen</div>
+            <button type="button" class="btn-close" onclick="closeModal('modalEditDept')"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="modal-body" style="padding: 20px; background-color: var(--card-bg);">
+            <form id="formEditDept" onsubmit="submitEditDept(event)">
+                <input type="hidden" name="id" id="edit_dept_id" value="">
+                <div class="form-group">
+                    <label>Kode Departemen</label>
+                    <input type="text" name="dept_code" id="edit_dept_code" class="form-control" required placeholder="Cth: HRD" maxlength="10">
+                </div>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Nama Departemen</label>
+                    <input type="text" name="dept_name" id="edit_dept_name" class="form-control" required placeholder="Cth: Human Resources">
+                </div>
+                <button type="submit" class="btn-primary w-full" style="margin-top: 20px;">Simpan Perubahan</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Tambah Tahun -->
 <div class="modal-overlay" id="modalYear">
     <div class="modal-content" style="max-width: 400px; height: auto;">
@@ -211,29 +235,32 @@ $years = $pdo->query("SELECT * FROM years ORDER BY year_value DESC")->fetchAll()
         document.getElementById(id).classList.remove('active');
     }
 
-    function editDepartment(id, currentName) {
-        const newName = prompt("Masukkan nama departemen baru:", currentName);
-        if (newName !== null && newName.trim() !== "" && newName !== currentName) {
-            const formData = new FormData();
-            formData.append('id', id);
-            formData.append('dept_name', newName.trim());
-            
-            fetch('../modules/department/edit_proc.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.text())
-            .then(data => {
-                if(data.trim() === 'success') {
-                    window.location.href = "master_data.php?success=1";
-                } else {
-                    alert(data);
-                }
-            })
-            .catch(err => {
-                alert('Terjadi kesalahan jaringan.');
-            });
-        }
+    function editDepartment(id, currentCode, currentName) {
+        document.getElementById('edit_dept_id').value = id;
+        document.getElementById('edit_dept_code').value = currentCode;
+        document.getElementById('edit_dept_name').value = currentName;
+        document.getElementById('modalEditDept').classList.add('active');
+    }
+
+    function submitEditDept(e) {
+        e.preventDefault();
+        const formData = new FormData(document.getElementById('formEditDept'));
+        
+        fetch('../modules/department/edit_proc.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            if(data.trim() === 'success') {
+                window.location.href = "master_data.php?success=1";
+            } else {
+                alert(data);
+            }
+        })
+        .catch(err => {
+            alert('Terjadi kesalahan jaringan.');
+        });
     }
 </script>
 

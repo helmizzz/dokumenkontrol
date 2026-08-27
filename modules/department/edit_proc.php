@@ -10,22 +10,30 @@ if ($_SESSION['role_name'] !== 'Superadmin') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = $_POST['id'] ?? 0;
+    $dept_code = trim($_POST['dept_code'] ?? '');
     $dept_name = trim($_POST['dept_name'] ?? '');
 
-    if (empty($id) || empty($dept_name)) {
+    if (empty($id) || empty($dept_code) || empty($dept_name)) {
         die("Data tidak lengkap.");
     }
 
     try {
+        // Cek kode kembar
+        $stmtCheckCode = $pdo->prepare("SELECT id FROM departments WHERE dept_code = ? AND id != ?");
+        $stmtCheckCode->execute([$dept_code, $id]);
+        if ($stmtCheckCode->fetch()) {
+            die("Kode departemen sudah digunakan oleh departemen lain.");
+        }
+
         // Cek nama kembar
-        $stmtCheck = $pdo->prepare("SELECT id FROM departments WHERE dept_name = ? AND id != ?");
-        $stmtCheck->execute([$dept_name, $id]);
-        if ($stmtCheck->fetch()) {
+        $stmtCheckName = $pdo->prepare("SELECT id FROM departments WHERE dept_name = ? AND id != ?");
+        $stmtCheckName->execute([$dept_name, $id]);
+        if ($stmtCheckName->fetch()) {
             die("Nama departemen sudah digunakan oleh departemen lain.");
         }
 
-        // Dapatkan nama lama
-        $stmtOld = $pdo->prepare("SELECT dept_name FROM departments WHERE id = ?");
+        // Dapatkan data lama
+        $stmtOld = $pdo->prepare("SELECT dept_code, dept_name FROM departments WHERE id = ?");
         $stmtOld->execute([$id]);
         $oldDept = $stmtOld->fetch();
         if (!$oldDept) {
@@ -33,10 +41,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Lakukan pembaruan
-        $stmtUpdate = $pdo->prepare("UPDATE departments SET dept_name = ? WHERE id = ?");
-        if ($stmtUpdate->execute([$dept_name, $id])) {
+        $stmtUpdate = $pdo->prepare("UPDATE departments SET dept_code = ?, dept_name = ? WHERE id = ?");
+        if ($stmtUpdate->execute([$dept_code, $dept_name, $id])) {
             // Log aktivitas
-            write_audit_log($pdo, $_SESSION['user_id'], 'UPDATE', 'Master Departemen', "Mengubah nama departemen dari '{$oldDept['dept_name']}' menjadi '{$dept_name}'");
+            $changes = [];
+            $oldCode = $oldDept['dept_code'] ?? '-';
+            if ($oldCode !== $dept_code) $changes[] = "Kode dari '{$oldCode}' menjadi '{$dept_code}'";
+            if ($oldDept['dept_name'] !== $dept_name) $changes[] = "Nama dari '{$oldDept['dept_name']}' menjadi '{$dept_name}'";
+            
+            if (!empty($changes)) {
+                $logMsg = "Mengubah data departemen: " . implode(', ', $changes);
+                write_audit_log($pdo, $_SESSION['user_id'], 'UPDATE', 'Master Departemen', $logMsg);
+            }
             
             echo "success";
         } else {
