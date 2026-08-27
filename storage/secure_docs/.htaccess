@@ -1,0 +1,8 @@
+# Mencegah akses langsung ke direktori storage
+Options -Indexes
+
+# Memblokir semua request langsung ke file PDF dan database di folder ini
+<FilesMatch "\.(pdf|sqlite|db)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
