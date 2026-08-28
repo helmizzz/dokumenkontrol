@@ -17,22 +17,24 @@ $where_clauses = ["d.status = 0"];
 $params = [];
 
 if (!empty($_GET['search'])) {
-    $where_clauses[] = "(doc_number LIKE :search OR title LIKE :search)";
-    $params[':search'] = '%' . trim($_GET['search']) . '%';
+    $where_clauses[] = "(d.doc_number LIKE :search_doc OR d.title LIKE :search_title)";
+    $searchTerm = '%' . trim($_GET['search']) . '%';
+    $params[':search_doc'] = $searchTerm;
+    $params[':search_title'] = $searchTerm;
 }
 if (!empty($_GET['year'])) {
-    $where_clauses[] = "year_id = :year";
+    $where_clauses[] = "d.year_id = :year";
     $params[':year'] = $_GET['year'];
 }
 if (!empty($_GET['month'])) {
-    $where_clauses[] = "month_value = :month";
+    $where_clauses[] = "d.month_value = :month";
     $params[':month'] = $_GET['month'];
 }
 
 // Department filter logic
 if ($_SESSION['role_name'] === 'Superadmin') {
     if (!empty($_GET['dept'])) {
-        $where_clauses[] = "dept_id = :dept";
+        $where_clauses[] = "d.dept_id = :dept";
         $params[':dept'] = $_GET['dept'];
     }
 } else {
