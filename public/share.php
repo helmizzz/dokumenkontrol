@@ -132,11 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
                     DOKUMEN KONTROL<br><span style="font-size: 2rem;">CONFIDENTIAL</span>
                 </div>
             </div>
-            <object data="share_stream.php?token=<?php echo urlencode($token); ?>" type="application/pdf" style="width: 100%; height: 100%; border: none;">
-                <div style="padding: 20px; text-align: center; margin-top: 50px;">
-                    Browser Anda tidak mendukung penampil PDF internal.
-                </div>
-            </object>
+            <iframe src="share_stream.php?token=<?php echo urlencode($token); ?>#toolbar=0&navpanes=0&scrollbar=0" style="width: 100%; height: 100%; border: none;"></iframe>
         </div>
     </div>
 <?php endif; ?>

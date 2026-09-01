@@ -179,7 +179,11 @@ $documents = $stmt->fetchAll();
                     </td>
                     <td>
                         <div class="action-btns">
-                            <button type="button" class="btn-icon" onclick="openDocumentViewer(<?php echo $doc['id']; ?>, '<?php echo htmlspecialchars(addslashes($doc['title'])); ?>')" title="View Dokumen">
+                            <?php 
+                                $can_delete = ($_SESSION['role_name'] === 'Superadmin' || $_SESSION['role_name'] === 'Admin' || $_SESSION['user_id'] == $doc['uploaded_by']);
+                                $can_download = ($_SESSION['role_name'] === 'Superadmin' || $_SESSION['user_id'] == $doc['uploaded_by']) ? 'true' : 'false';
+                            ?>
+                            <button type="button" class="btn-icon" onclick="openDocumentViewer(<?php echo $doc['id']; ?>, '<?php echo htmlspecialchars(addslashes($doc['title'])); ?>', <?php echo $can_download; ?>)" title="View Dokumen">
                                 <i class='bx bx-show'></i>
                             </button>
                             
@@ -259,13 +263,14 @@ function softDeleteDocument(fileId, title) {
     }
 }
 
-function openDocumentViewer(fileId, title) {
+function openDocumentViewer(fileId, title, canDownload) {
     const modal = document.getElementById('pdfViewerModal');
     const iframeContainer = document.getElementById('pdfFrameContainer');
     const titleEl = document.getElementById('pdfViewerTitle');
     
     titleEl.textContent = title;
-    const streamUrl = `view_stream.php?file_id=${fileId}`;
+    const toolbarMode = canDownload ? '1' : '0';
+    const streamUrl = `view_stream.php?file_id=${fileId}#toolbar=${toolbarMode}&navpanes=0&scrollbar=0`;
     
     iframeContainer.innerHTML = `
     <div style="position: relative; width: 100%; height: 100%; overflow: hidden;">
@@ -274,9 +279,7 @@ function openDocumentViewer(fileId, title) {
                 DOKUMEN KONTROL<br><span style="font-size: 2rem;">INTERNAL USE ONLY</span>
             </div>
         </div>
-        <object data="${streamUrl}" type="application/pdf" style="width: 100%; height: 100%; border: none;">
-            <div style="padding: 20px; text-align: center;">Browser Anda tidak mendukung penampil PDF internal. Silakan hubungi admin.</div>
-        </object>
+        <iframe src="${streamUrl}" style="width: 100%; height: 100%; border: none;"></iframe>
     </div>`;
     
     modal.classList.add('active');
