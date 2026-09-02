@@ -42,17 +42,17 @@ $months = [
 ];
 
 // Ambil daftar departemen (kecuali departemen asal dokumen)
-$stmt_depts = $pdo->prepare("SELECT * FROM departments WHERE id != ? ORDER BY dept_name ASC");
+$stmt_depts = $pdo->prepare("SELECT * FROM departments WHERE id != ? AND (status = 1 OR status IS NULL) ORDER BY dept_name ASC");
 $stmt_depts->execute([$document['dept_id']]);
 $other_depts = $stmt_depts->fetchAll();
 
-// Ambil semua user (kecuali diri sendiri), join departemen
+// Ambil semua user (kecuali diri sendiri), join departemen (hanya user & departemen aktif)
 $stmt_all_users = $pdo->prepare("
     SELECT u.id, u.username, u.full_name, r.role_name, d.dept_name 
     FROM users u 
     JOIN roles r ON u.role_id = r.id 
     LEFT JOIN departments d ON u.dept_id = d.id 
-    WHERE u.id != ? 
+    WHERE u.id != ? AND (u.status = 1 OR u.status IS NULL) AND (d.status = 1 OR d.status IS NULL OR d.id IS NULL)
     ORDER BY d.dept_name ASC, u.username ASC
 ");
 $stmt_all_users->execute([$_SESSION['user_id']]);
